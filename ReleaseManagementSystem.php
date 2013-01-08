@@ -41,7 +41,7 @@ class ReleaseManagementSystem extends Backend
         * defined blacklist palettes
         * @var array
         */
-        protected $rm_palettes_blacklist = array('__selector__','alias','accordionstart','accordionstop','toplink');	
+        protected $rm_palettes_blacklist = array('__selector__');	
 	
 	/**
 	* implement Backend - callbacks
@@ -49,38 +49,37 @@ class ReleaseManagementSystem extends Backend
 	*/
 	public function handleBackendUserAccessControlls($strTable)
 	{
-		$this->import("BackendUser");
+	    $this->import("BackendUser");
 
-		$arrAllowedTables = array('tl_content');
-		
-		if(!$GLOBALS['TL_CONFIG']['rms_control_group']) $GLOBALS['TL_CONFIG']['rms_control_group'] = 0;
-		if(!$GLOBALS['TL_CONFIG']['rms_active']) $GLOBALS['TL_CONFIG']['rms_active'] = false;
-		
-		if ((in_array($strTable, $arrAllowedTables)) && (!$this->BackendUser->isMemberOf($GLOBALS['TL_CONFIG']['rms_control_group'])  || $this->Input->get("author")) && ($GLOBALS['TL_CONFIG']['rms_active']))
-		{
-			if ($this->Input->get("act")=="edit")
-			{				
-			    $GLOBALS['TL_DCA'][$strTable]['config']['dataContainer'] = 'Memory';				
-			    $GLOBALS['TL_DCA'][$strTable]['config']['onload_callback'][] = array('ReleaseManagementSystem','onLoadCallback');
-			    
-			    $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'][] = array('ReleaseManagementSystem','onSubmitCallback');			    			    
-			}								
-		}
-		
-		//add everytime in tl_content
-		if(($strTable == 'tl_content')  && ($GLOBALS['TL_CONFIG']['rms_active']))
-		{
-		    $GLOBALS['TL_DCA'][$strTable]['config']['onload_callback'][] = array('ReleaseManagementSystem','addRMFields');
-		   # $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'][] = array('ReleaseManagementSystem','sendEmailInfo');
-		    $GLOBALS['TL_DCA'][$strTable]['list']['global_operations']['showPreview'] = array                 
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_content']['show_preview'],
-				'href'                => 'key=showPreview',
-				'class'               => 'browser_preview',
-				'attributes'          => 'target="_blank"'
-			);
-		}
-		
+	    $arrAllowedTables = array('tl_content','tl_newsletter','tl_calendar_events','tl_news');
+	    
+	    if(!$GLOBALS['TL_CONFIG']['rms_control_group']) $GLOBALS['TL_CONFIG']['rms_control_group'] = 0;
+	    if(!$GLOBALS['TL_CONFIG']['rms_active']) $GLOBALS['TL_CONFIG']['rms_active'] = false;
+	    
+	    if ((in_array($strTable, $arrAllowedTables)) && (!$this->BackendUser->isMemberOf($GLOBALS['TL_CONFIG']['rms_control_group'])  || $this->Input->get("author")) && ($GLOBALS['TL_CONFIG']['rms_active']))
+	    {
+		if ($this->Input->get("act")=="edit")
+		{				
+		    $GLOBALS['TL_DCA'][$strTable]['config']['dataContainer'] = 'Memory';				
+		    $GLOBALS['TL_DCA'][$strTable]['config']['onload_callback'][] = array('ReleaseManagementSystem','onLoadCallback');
+		    
+		    $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'][] = array('ReleaseManagementSystem','onSubmitCallback');			    			    
+		}								
+	    }
+	    
+	    //add everytime in allowed tables
+	    if((in_array($strTable, $arrAllowedTables)) && ($GLOBALS['TL_CONFIG']['rms_active']))
+	    {
+		$GLOBALS['TL_DCA'][$strTable]['config']['onload_callback'][] = array('ReleaseManagementSystem','addRMFields');
+	       # $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'][] = array('ReleaseManagementSystem','sendEmailInfo');
+		$GLOBALS['TL_DCA'][$strTable]['list']['global_operations']['showPreview'] = array                 
+		    (
+			    'label'               => &$GLOBALS['TL_LANG'][$strTable]['show_preview'],
+			    'href'                => 'key=showPreview',
+			    'class'               => 'browser_preview',
+			    'attributes'          => 'target="_blank"'
+		    );
+	    }		
 	}
 	
 	/**
@@ -92,19 +91,37 @@ class ReleaseManagementSystem extends Backend
 	*/
 	public function previewContentElement(Database_Result $objElement, $strBuffer)
 	{
+	    
 	    if($this->Input->get('do') == 'preview' || $this->Input->get('do') == 'article')
 	    {
-		$objStoredData = $this->Database->prepare("SELECT `data` FROM `tl_rms` WHERE `ref_id`=? AND `ref_table`=?")->execute(
-								    $objElement->id,
-								    'tl_content');
-		if ($objStoredData->numRows==1)
-		{	
-		    $objRow = $this->overwriteDbObj($objElement, deserialize($objStoredData->data));		    
-		    $objRow->typePrefix = 'ce_';
-		    $strClass = $this->findContentElement($objRow->type);
-		    $objElement = new $strClass($objRow);
-		    $strBuffer = $objElement->generate();		    
-		}								    
+                $id = false;
+                 
+                //region
+                switch($this->Input->get('region'))
+                {
+		    case 'news':
+		    case 'newsletter':
+		    case 'calendar_events':
+			    $typePrefix = 'mod_';			      		    
+		    break;
+		    default:
+		        $typePrefix = 'ce_';
+		        
+			$objStoredData = $this->Database->prepare("SELECT `data` FROM `tl_rms` WHERE `ref_id`=? AND `ref_table`=?")
+							->execute($objElement->id, 'tl_content');
+									        
+			if ($objStoredData->numRows  == 1)
+			{				
+			    $objRow = $this->overwriteDbObj($objElement, deserialize($objStoredData->data));		    			
+			    $objRow->typePrefix = $typePrefix;
+			    $objRow->published = 1;			    
+			    $strClass = $this->findContentElement($objRow->type);
+			    $objElement = new $strClass($objRow);
+			    $strBuffer = $objElement->generate(); 			    
+			}						        
+                }
+								    
+								    
 	    }
 	    else
 	    {
@@ -143,7 +160,7 @@ class ReleaseManagementSystem extends Backend
 	public function addRMFields(DataContainer $dc)
 	{
 	    $strTable = $this->Input->get("table");
-	    
+
 	    //add Field in meny content-elements
             foreach($GLOBALS['TL_DCA'][$strTable]['palettes'] as $name => $field)
             {
@@ -162,22 +179,37 @@ class ReleaseManagementSystem extends Backend
 	{
 	    $strTable = $this->Input->get("table");
 
-	    $this->import("BackendUser");
-	    			      
+	    $this->import("BackendUser","User");
+	    		      
 	    if($varValue == 1)
 	    {
-		//send Email
-		$email = new Email();
-		$email->from = $this->BackendUser->email;
-		$email->fromName = $this->BackendUser->email;
-		$email->charset = 'utf-8';
-		$email->subject = 'Freigabe-Aufforderung';
-		$email->text = $dc->Input->post('rms_notice');
-		$email->sendTo(($GLOBALS['TL_CONFIG']['rms_sender']) ? $GLOBALS['TL_CONFIG']['rms_sender'] : $GLOBALS['TL_CONFIG']['adminEmail']);
+		
+		$bigEditor = ($GLOBALS['TL_CONFIG']['rms_sender']) ? $GLOBALS['TL_CONFIG']['rms_sender'] : $GLOBALS['TL_CONFIG']['adminEmail'];
+		
+		//mail from editor to Super-Editor (question)
+		if(stristr($bigRed,$this->BackendUser->email) === false)
+		{
+		    $email = new Email();
+		    $email->from = $this->BackendUser->email;
+		    $email->charset = 'utf-8';
+		    $email->subject = 'Freigabe-Aufforderung';
+		    $email->text = $dc->Input->post('rms_notice');
+		    $email->sendTo($bigEditor);
+		}
+		else
+		//send Email from Super-Editor to editor  (answer)
+		{
+		    $email = new Email();
+		    $email->from = $bigEditor;
+		    $email->charset = 'utf-8';
+		    $email->subject = 'Freigabe-Aufforderung (Antwort)';
+		    $email->text = $dc->Input->post('rms_notice');
+		    $email->sendTo($this->BackendUser->email);		
+		}
 	    }
 	    
 	    //disable everytime sendEmail 		      
-	    $this->Database->prepare('UPDATE `tl_content` SET `rms_release_info`="" WHERE `id`=?')->execute($dc->id);		   	     
+	    $this->Database->prepare('UPDATE `'.$strTable.'` SET `rms_release_info`="" WHERE `id`=?')->execute($dc->id);		   	     
 	     	     
 	}
 	

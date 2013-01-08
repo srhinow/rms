@@ -71,7 +71,7 @@ $GLOBALS['TL_DCA']['tl_rms'] = array
 			'edit' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_article']['edit'],
-				'href'                => 'do=article&table=tl_content&act=edit',
+				'href'                => 'act=edit',
 				'icon'                => 'edit.gif',
 				'button_callback'     => array('tl_rms', 'editArticle'),
 				'attributes'          => 'class="contextmenu"'
@@ -160,19 +160,97 @@ class tl_rms extends Backend
 		$userObj = $this->Database->prepare('SELECT * FROM `tl_user` WHERE `id`=?')
 		               ->limit(1)
 			       ->execute($row['ref_author']);
+			       
+		$strUrl = false;	       
+			       
+		switch($row['ref_table'])
+		{
+		case 'tl_content':    
+		    $bereich = 'Inhaltselement';
+		    $pageObj = $this->Database->prepare('SELECT `p`.* FROM `tl_page` `p` 
+		    LEFT JOIN `tl_article` `a` ON `p`.`id`=`a`.`pid`
+		    LEFT JOIN `tl_content` `c` ON `a`.`id`=`c`.`pid`
+		    WHERE `c`.`id`=?')
+				    ->limit(1)
+				    ->execute($row['ref_id']);
+				    
+		    if($pageObj->numRows > 0) $strUrl = $this->generateFrontendUrl($pageObj->row(),'/do/preview');
+		    $strPreviewLink = '<a href="'.$this->Environment->base.$strUrl.'" target="_blank">'.$pageObj->title.'</a>';
+		    break;		    
+		case 'tl_newsletter':    		    
+		    
+		    $bereich = 'Newsletter';		    
+		    //get Preview-Link
+		    if($GLOBALS['TL_CONFIG']['rms_prevjump_newsletter'])
+		    {
+			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
+										->limit(1)
+										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_newsletter']);
+    
+			if ($objJumpTo->numRows)
+			{
+				$strUrl = $this->generateFrontendUrl($objJumpTo->fetchAssoc(), ($GLOBALS['TL_CONFIG']['useAutoItem'] ?  '/%s' : '/do/preview/items/%s'));
+			}                  
+		    }
+		    
+		    //get Link-Title
+		    $pageObj = $this->Database->prepare('SELECT * FROM `tl_newsletter` WHERE `id`=?')
+					      ->limit(1)
+					      ->execute($row['ref_id']);
+		    
+		    $strPreviewLink = '<a href="'.sprintf($strUrl, $pageObj->alias).'" target="_blank">'.$pageObj->subject.'</a>';
+		    break;
+		    
+		case 'tl_calendar_events':
+		    
+		    $bereich = 'Veranstaltung';
+		    if($GLOBALS['TL_CONFIG']['rms_prevjump_calendar_events'])
+		    {
+			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
+										->limit(1)
+										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_calendar_events']);
+    
+			if ($objJumpTo->numRows)
+			{
+				$strUrl = $this->generateFrontendUrl($objJumpTo->fetchAssoc(), ($GLOBALS['TL_CONFIG']['useAutoItem'] ?  '/%s' : '/do/preview/events/%s'));
+			}                  
+		    }
+		    
+		    //get Link-Title
+		    $pageObj = $this->Database->prepare('SELECT * FROM `tl_calendar_events` WHERE `id`=?')
+					      ->limit(1)
+					      ->execute($row['ref_id']);
+					      		    	
+		    $strPreviewLink = '<a href="'.sprintf($strUrl, $pageObj->alias).'" target="_blank">'.$pageObj->title.'</a>';	
+		    break;	
+		    
+		case 'tl_news':
 		
-		$pageObj = $this->Database->prepare('SELECT `p`.* FROM `tl_page` `p` 
-		LEFT JOIN `tl_article` `a` ON `p`.`id`=`a`.`pid`
-		LEFT JOIN `tl_content` `c` ON `a`.`id`=`c`.`pid`
-		WHERE `c`.`id`=?')
-				->limit(1)
-				->execute($row['ref_id']);			  
-		if($pageObj->numRows > 0) $strUrl = $this->generateFrontendUrl($pageObj->row(),'/do/preview');
-// 		print_r($row);
-		
-		$label = '
-		<strong>Vorchau-Link: </strong><a href="'.$this->Environment->base.$strUrl.'" target="_blank">'.$pageObj->title.'</a><br>
-		<strong>Author:</strong> '.$userObj->name.' ('.$userObj->email.')<br>
+		    $bereich = 'Nachrichten';
+		    if($GLOBALS['TL_CONFIG']['rms_prevjump_news'])
+		    {
+			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
+										->limit(1)
+										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_news']);
+    
+			if ($objJumpTo->numRows)
+			{
+				$strUrl = $this->generateFrontendUrl($objJumpTo->fetchAssoc(), ($GLOBALS['TL_CONFIG']['useAutoItem'] ?  '/%s' : '/do/preview/items/%s'));			}                  
+		    }
+		    
+		    //get Link-Title
+		    $pageObj = $this->Database->prepare('SELECT * FROM `tl_news` WHERE `id`=?')
+					      ->limit(1)
+					      ->execute($row['ref_id']);
+					      
+		    $strPreviewLink = '<a href="'.sprintf($strUrl, $pageObj->alias).'" target="_blank">'.$pageObj->headline.'</a>';					      		    		
+		    break;		    		    
+		}
+			  
+				
+		$label = '<strong>Bereich:</strong> '.$bereich.'<br>';
+		$label .= '<strong>Vorchau-Link: </strong>'.$strPreviewLink.'<br>';
+		$label .= '<strong>Author:</strong> '.$userObj->name.' ('.$userObj->email.')<br>
 		<strong>Änderungs-Notiz:</strong> '.nl2br($row['ref_notice']);
 		
 
@@ -192,10 +270,17 @@ class tl_rms extends Backend
 	 */
 	public function editArticle($row, $href, $label, $title, $icon, $attributes)
 	{
-		$objPage = $this->Database->prepare("SELECT * FROM tl_content WHERE id=?")
+		$objPage = $this->Database->prepare("SELECT * FROM ".$row['ref_table']." WHERE id=?")
 								  ->limit(1)
 								  ->execute($row['ref_id']);
 
-		return  '<a href="'.$this->addToUrl($href.'&amp;id='.$objPage->id).'&amp;author='.$row['ref_author'].'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
+                switch($row['ref_table'])
+                {
+                case 'tl_content': $getTableStr = 'do=article&table=tl_content'; break;
+                case 'tl_newsletter': $getTableStr = 'do=newsletter&table=tl_newsletter'; break;
+                case 'tl_news': $getTableStr = 'do=news&table=tl_news'; break;
+                case 'tl_calendar_events': $getTableStr = 'do=calendar&table=tl_calendar_events'; break;
+		}
+		return  '<a href="'.$this->addToUrl($getTableStr.'&amp;act=edit&amp;id='.$objPage->id).'&amp;author='.$row['ref_author'].'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
 	}	
 }	

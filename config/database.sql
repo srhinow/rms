@@ -15,3 +15,27 @@ CREATE TABLE `tl_content` (
   `rms_release_info` char(1) NOT NULL default '',
   `rms_first_save` char(1) NOT NULL default '',
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tl_article` (
+  `rms_notice` longtext NULL,
+  `rms_release_info` char(1) NOT NULL default '',
+  `rms_first_save` char(1) NOT NULL default '',
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tl_newsletter` (
+  `rms_notice` longtext NULL,
+  `rms_release_info` char(1) NOT NULL default '',
+  `rms_first_save` char(1) NOT NULL default '',
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tl_news` (
+  `rms_notice` longtext NULL,
+  `rms_release_info` char(1) NOT NULL default '',
+  `rms_first_save` char(1) NOT NULL default '',
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tl_calendar_events` (
+  `rms_notice` longtext NULL,
+  `rms_release_info` char(1) NOT NULL default '',
+  `rms_first_save` char(1) NOT NULL default '',
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;

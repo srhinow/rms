@@ -27,6 +27,8 @@
  * @license    LGPL 
  * @filesource
  */
+
+require_once(TL_ROOT.'/system/config/localconfig.php');
  
 if($GLOBALS['TL_CONFIG']['rms_active']) 
 {
@@ -47,3 +49,7 @@ if($GLOBALS['TL_CONFIG']['rms_active'])
     $GLOBALS['TL_HOOKS']['loadDataContainer'][] = array('ReleaseManagementSystem', 'handleBackendUserAccessControlls');
     $GLOBALS['TL_HOOKS']['getContentElement'][] = array('ReleaseManagementSystem', 'previewContentElement');
 }
+
+$GLOBALS['FE_MOD']['news']['newsreader_rms'] = 'ModuleNewsReaderRMS';
+$GLOBALS['FE_MOD']['newsletter']['nl_reader_rms'] = 'ModuleNewsletterReaderRMS';
+$GLOBALS['FE_MOD']['events']['eventreader_rms'] = 'ModuleEventReaderRMS';
