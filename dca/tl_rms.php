@@ -270,9 +270,9 @@ class tl_rms extends Backend
 	 */
 	public function editArticle($row, $href, $label, $title, $icon, $attributes)
 	{
-		$objPage = $this->Database->prepare("SELECT * FROM ".$row['ref_table']." WHERE id=?")
-								  ->limit(1)
-								  ->execute($row['ref_id']);
+// 		$objPage = $this->Database->prepare("SELECT * FROM ".$row['ref_table']." WHERE id=?")
+// 								  ->limit(1)
+// 								  ->execute($row['ref_id']);
 
                 switch($row['ref_table'])
                 {
@@ -281,6 +281,6 @@ class tl_rms extends Backend
                 case 'tl_news': $getTableStr = 'do=news&table=tl_news'; break;
                 case 'tl_calendar_events': $getTableStr = 'do=calendar&table=tl_calendar_events'; break;
 		}
-		return  '<a href="'.$this->addToUrl($getTableStr.'&amp;act=edit&amp;id='.$objPage->id).'&amp;author='.$row['ref_author'].'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
+		return  '<a href="'.$this->addToUrl($getTableStr.'&amp;act=edit&amp;id='.$row['ref_id']).'&amp;author='.$row['ref_author'].'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
 	}	
 }	

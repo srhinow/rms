@@ -28,6 +28,7 @@
  * @filesource
  */
 
+// load for Contao 3.x Version
 require_once(TL_ROOT.'/system/config/localconfig.php');
  
 if($GLOBALS['TL_CONFIG']['rms_active']) 

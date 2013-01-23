@@ -63,8 +63,19 @@ class ReleaseManagementSystem extends Backend
 		    $GLOBALS['TL_DCA'][$strTable]['config']['dataContainer'] = 'Memory';				
 		    $GLOBALS['TL_DCA'][$strTable]['config']['onload_callback'][] = array('ReleaseManagementSystem','onLoadCallback');
 		    
+		    //drop adjustTime-Hook
+// 		    $callbackArr = $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'];
+// 		    if(is_array($callbackArr))
+// 		    {
+// 			foreach($callbackArr as $c => $m)
+// 			{
+//  			    if($m[1] == 'adjustTime') unset($callbackArr[$c]);  
+// 			}
+// 		    }
+// 		    $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'] =  $callbackArr;
 		    $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'][] = array('ReleaseManagementSystem','onSubmitCallback');			    			    
-		}								
+		}
+							
 	    }
 	    
 	    //add everytime in allowed tables
@@ -180,37 +191,43 @@ class ReleaseManagementSystem extends Backend
 	    $strTable = $this->Input->get("table");
 
 	    $this->import("BackendUser","User");
-	    		      
+	   		    		      
 	    if($varValue == 1)
-	    {
-		
-		$bigEditor = ($GLOBALS['TL_CONFIG']['rms_sender']) ? $GLOBALS['TL_CONFIG']['rms_sender'] : $GLOBALS['TL_CONFIG']['adminEmail'];
-		
+	    {		
+                
 		//mail from editor to Super-Editor (question)
-		if(stristr($bigRed,$this->BackendUser->email) === false)
-		{
+		if(stristr($GLOBALS['TL_CONFIG']['rms_sender'],$this->BackendUser->email) === false)
+		{		    		    
 		    $email = new Email();
 		    $email->from = $this->BackendUser->email;
 		    $email->charset = 'utf-8';
 		    $email->subject = 'Freigabe-Aufforderung';
 		    $email->text = $dc->Input->post('rms_notice');
-		    $email->sendTo($bigEditor);
+		    $email->sendTo(($GLOBALS['TL_CONFIG']['rms_sender']) ? $GLOBALS['TL_CONFIG']['rms_sender'] : $GLOBALS['TL_CONFIG']['adminEmail']);
 		}
 		else
 		//send Email from Super-Editor to editor  (answer)
 		{
+		    //get the author-email from this change
+		    $lastEditorObj = $this->Database->prepare('SELECT * FROM `tl_user` WHERE `id`=?')
+		    ->limit(1)
+		    ->execute($this->Input->get('author'));		                
+
+		    if(!$lastEditorObj->email) return;
+                	
 		    $email = new Email();
-		    $email->from = $bigEditor;
+		    $email->from = $this->BackendUser->email;
 		    $email->charset = 'utf-8';
 		    $email->subject = 'Freigabe-Aufforderung (Antwort)';
 		    $email->text = $dc->Input->post('rms_notice');
-		    $email->sendTo($this->BackendUser->email);		
+		    $email->sendTo($lastEditorObj->email);		
 		}
 	    }
 	    
 	    //disable everytime sendEmail 		      
 	    $this->Database->prepare('UPDATE `'.$strTable.'` SET `rms_release_info`="" WHERE `id`=?')->execute($dc->id);		   	     
-	     	     
+	    
+	    return '';	     	     
 	}
 	
 	/**
@@ -233,7 +250,7 @@ class ReleaseManagementSystem extends Backend
 			
 	    if ($objStoredData->numRows > 0)
 	    {		    
-		$dc->setDataArray(deserialize($objStoredData->data));
+		$dc->setDataArray(deserialize($objStoredData->data));                
 	    }
 	    else
 	    {
@@ -242,8 +259,9 @@ class ReleaseManagementSystem extends Backend
 		    
 		$arrData = $objData->fetchAllAssoc();
 		    
-		$dc->setDataArray($arrData[0]);
+		$dc->setDataArray($arrData[0]);                                
 	    }
+	    $dc->setActiveRecord();
 	    
 	}
 	/**
@@ -262,7 +280,13 @@ class ReleaseManagementSystem extends Backend
 										$this->Input->get("table"),
 										$userID);
 		$data = $dc->getDataArray();
-		                                
+		                               
+		//correct time-data
+		switch($this->Input->get('table')) 
+		{
+		    case 'tl_calendar_events': $data = $this->adjustTimeCalEvents($data); break;                 
+		    case 'tl_news': $data = $this->adjustTimeNews($data); break;                                
+		}                                
 		$arrSubmitData = array(
 				'tstamp' => time(),
 				'ref_id' => $this->Input->get("id"),
@@ -283,7 +307,11 @@ class ReleaseManagementSystem extends Backend
 		}
 		
 		// create / first-save
-		if ($this->Input->get("mode") == 1)
+		$isNewEntryObj = $this->Database->prepare('SELECT count(*) c FROM `'.$this->Input->get("table").'` WHERE `id`=? AND `tstamp`=?')
+						->limit(1)
+						->execute($this->Input->get("id"),0);
+
+		if ((int) $isNewEntryObj->c == 1)
 		{
 		     $data['tstamp'] = time();
 		     $data['rms_first_save'] = 1;
@@ -291,7 +319,85 @@ class ReleaseManagementSystem extends Backend
 		}
 		
 	}
+	/**
+	* custom adjustTime for tl_calendar_events
+	* @var array
+	*/
+	protected function adjustTimeCalEvents($data = array())
+	{
+	   if(count($data) < 1)
+	   {
+	      return; 
+	   }
+	   
+	    $arrSet['startTime'] = $data['startDate'];
+	    $arrSet['endTime'] = $data['startDate'];
+
+	    // Set end date
+	    if (strlen($data['endDate']))
+	    {
+		    if ($data['endDate'] > $data['startDate'])
+		    {
+			    $arrSet['endDate'] = $data['endDate'];
+			    $arrSet['endTime'] = $data['endDate'];
+		    }
+		    else
+		    {
+			    $arrSet['endDate'] = $data['startDate'];
+			    $arrSet['endTime'] = $data['startDate'];
+		    }
+	    }
+	    // Add time
+	    if ($data['addTime'])
+	    {
+		    $arrSet['startTime'] = strtotime(date('Y-m-d', $arrSet['startTime']) . ' ' . date('H:i:s', $data['startTime']));
+		    $arrSet['endTime'] = strtotime(date('Y-m-d', $arrSet['endTime']) . ' ' . date('H:i:s', $data['endTime']));	    
+	    }
+
+	    // Adjust end time of "all day" events
+	    elseif ((strlen($data['endDate']) && $arrSet['endDate'] == $arrSet['endTime']) || $arrSet['startTime'] == $arrSet['endTime'])
+	    {
+		    $arrSet['endTime'] = (strtotime('+ 1 day', $arrSet['endTime']) - 1);
+	    }
+
+	    $arrSet['repeatEnd'] = 0;
+
+	    if ($data['recurring'])
+	    {
+		    $arrRange = deserialize($data['repeatEach']);
+
+		    $arg = $arrRange['value'] * $data['recurrences'];
+		    $unit = $arrRange['unit'];
+
+		    $strtotime = '+ ' . $arg . ' ' . $unit;
+		    $arrSet['repeatEnd'] = strtotime($strtotime, $arrSet['endTime']);
+	    }
+
+            $data = array_merge($data,$arrSet);
+
+            return $data;
+	   
+	}
 	
+	/**
+	* custom adjustTime for tl_news
+	* @var array
+	*/
+	protected function adjustTimeNews($data = array())
+	{
+	    // Return if there is no active record (override all)
+	    if(count($data) < 1)
+	    {
+		return; 
+	    }
+
+	    $arrSet['date'] = strtotime(date('Y-m-d', $data['date']) . ' ' . date('H:i:s', $data['time']));
+	    $arrSet['time'] = $arrSet['date'];
+
+            $data = array_merge($data,$arrSet);
+
+            return $data;
+	}	
 	
 	/**
 	* overwrite the old entry if entry acknowdlge
