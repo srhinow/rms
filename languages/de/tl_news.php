@@ -35,7 +35,7 @@
 $GLOBALS['TL_LANG']['tl_news']['rms_notice']     = array('Freigabe-Anmerkung', 'Die Anmerkung dient dem Verantwortlichen als Hilfestellung der Änderungen.');
 $GLOBALS['TL_LANG']['tl_news']['rms_release_info']          = array('Änderungsbescheid senden', 'Wenn dieses Kästchen ausgewählt wurde, wird der Verantworltiche eine Nachricht per E-Mail erhalten.');
 $GLOBALS['TL_LANG']['tl_news']['rms_release_ok']      = array('diese Version freigeben', 'Wenn dieses Häkchen gesetzt wird, wird diese Version auf der Website freigegeben.');
-$GLOBALS['TL_LANG']['tl_news']['show_preview'] = array('Vorschau anzeigen','zeigt die aktuelle Website mit allen unbestätigten Änderungen an.');
+$GLOBALS['TL_LANG']['tl_news']['show_preview'] = array('Vorschau anzeigen','zeigt die News-Detailseite mit allen unbestätigten Änderungen an.');
 /**
  * Legends
  */

@@ -62,17 +62,6 @@ class ReleaseManagementSystem extends Backend
 		{				
 		    $GLOBALS['TL_DCA'][$strTable]['config']['dataContainer'] = 'Memory';				
 		    $GLOBALS['TL_DCA'][$strTable]['config']['onload_callback'][] = array('ReleaseManagementSystem','onLoadCallback');
-		    
-		    //drop adjustTime-Hook
-// 		    $callbackArr = $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'];
-// 		    if(is_array($callbackArr))
-// 		    {
-// 			foreach($callbackArr as $c => $m)
-// 			{
-//  			    if($m[1] == 'adjustTime') unset($callbackArr[$c]);  
-// 			}
-// 		    }
-// 		    $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'] =  $callbackArr;
 		    $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'][] = array('ReleaseManagementSystem','onSubmitCallback');			    			    
 		}
 							
@@ -82,14 +71,30 @@ class ReleaseManagementSystem extends Backend
 	    if((in_array($strTable, $arrAllowedTables)) && ($GLOBALS['TL_CONFIG']['rms_active']))
 	    {
 		$GLOBALS['TL_DCA'][$strTable]['config']['onload_callback'][] = array('ReleaseManagementSystem','addRMFields');
-	       # $GLOBALS['TL_DCA'][$strTable]['config']['onsubmit_callback'][] = array('ReleaseManagementSystem','sendEmailInfo');
-		$GLOBALS['TL_DCA'][$strTable]['list']['global_operations']['showPreview'] = array                 
-		    (
-			    'label'               => &$GLOBALS['TL_LANG'][$strTable]['show_preview'],
-			    'href'                => 'key=showPreview',
-			    'class'               => 'browser_preview',
-			    'attributes'          => 'target="_blank"'
-		    );
+		
+		
+		
+		switch($strTable)
+		{
+		case 'tl_content':
+		    $GLOBALS['TL_DCA'][$strTable]['list']['global_operations']['showPreview'] = array                 
+			(
+				'label'               => &$GLOBALS['TL_LANG'][$strTable]['show_preview'],
+				'href'                => 'key=showPreview',
+				'class'               => 'browser_preview',
+				'attributes'          => 'target="_blank"'
+			);
+		break;
+		default:
+		    $GLOBALS['TL_DCA'][$strTable]['list']['operations']['showPreview'] = array                 
+			(
+				'label'               => &$GLOBALS['TL_LANG'][$strTable]['show_preview'],
+				'href'                => 'key=showPreview',
+				'class'               => 'browser_preview',
+				'icon'                => 'page.gif',
+				'attributes'          => 'target="_blank"'
+			);			
+		}   
 	    }		
 	}
 	
@@ -197,7 +202,9 @@ class ReleaseManagementSystem extends Backend
                 
 		//mail from editor to Super-Editor (question)
 		if(stristr($GLOBALS['TL_CONFIG']['rms_sender'],$this->BackendUser->email) === false)
-		{		    		    
+		{		    
+
+		    
 		    $email = new Email();
 		    $email->from = $this->BackendUser->email;
 		    $email->charset = 'utf-8';
@@ -430,23 +437,102 @@ class ReleaseManagementSystem extends Backend
 	*/
 	public function showPreviewInBrowser()
 	{
-	    $contentId = $this->Input->get('id');
-	    
-	    if($contentId)
-	    {
-		$this->import('Database');
-		$pageObj = $this->Database->prepare('SELECT `p`.* FROM `tl_page` `p` 
-		LEFT JOIN `tl_article` `a` ON `p`.`id`=`a`.`pid`
-		WHERE `a`.`id`=?')
-					  ->limit(1)
-					  ->execute($contentId);
-					  
-		if($pageObj->numRows > 0) $strUrl = $this->generateFrontendUrl($pageObj->row(),'/do/preview');
-		  
-		$this->redirect($strUrl);			  
-					  
-	    }
+	   $this->redirect($this->getPreviewLink());
 	}
 	
+	/**
+	* get Preview Link-Date
+	*/
+	 public function getPreviewLink()
+	 {
+	 	
+	 	$return = array();
+	 	
+	 	switch($this->Input->get('table'))
+		{
+		case 'tl_content':    
+		
+		    $pageObj = $this->Database->prepare('SELECT `p`.* FROM `tl_page` `p` 
+		    LEFT JOIN `tl_article` `a` ON `p`.`id`=`a`.`pid`
+		    LEFT JOIN `tl_content` `c` ON `a`.`id`=`c`.`pid`
+		    WHERE `c`.`id`=?')
+				    ->limit(1)
+				    ->execute($this->Input->get('id'));
+				    
+                    if($pageObj->numRows > 0) $strUrl = $this->generateFrontendUrl($pageObj->row(),'/do/preview');
+		    $strPreviewUrl = $this->Environment->base.$strUrl;
+		    
+		break;		    
+		case 'tl_newsletter':    		    
+		        
+		    //get Preview-Link
+		    if($GLOBALS['TL_CONFIG']['rms_prevjump_newsletter'])
+		    {
+			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
+										->limit(1)
+										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_newsletter']);
+    
+			if ($objJumpTo->numRows)
+			{
+				$strUrl = $this->generateFrontendUrl($objJumpTo->fetchAssoc(), ($GLOBALS['TL_CONFIG']['useAutoItem'] ?  '/%s' : '/do/preview/items/%s'));
+			}                  
+		    }
+		    
+		    //get Link-Title
+		    $pageObj = $this->Database->prepare('SELECT * FROM `tl_newsletter` WHERE `id`=?')
+					      ->limit(1)
+					      ->execute($this->Input->get('id'));
+		    
+		    $strPreviewUrl = sprintf($strUrl, $pageObj->alias);
+		    
+		break;		    
+		case 'tl_calendar_events':
+		    
+		    if($GLOBALS['TL_CONFIG']['rms_prevjump_calendar_events'])
+		    {
+			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
+										->limit(1)
+										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_calendar_events']);
+    
+			if ($objJumpTo->numRows)
+			{
+				$strUrl = $this->generateFrontendUrl($objJumpTo->fetchAssoc(), ($GLOBALS['TL_CONFIG']['useAutoItem'] ?  '/%s' : '/do/preview/events/%s'));
+			}                  
+		    }
+		    
+		    //get Link-Title
+		    $pageObj = $this->Database->prepare('SELECT * FROM `tl_calendar_events` WHERE `id`=?')
+					      ->limit(1)
+					      ->execute($this->Input->get('id'));
+					      		    	
+		    $strPreviewUrl = sprintf($strUrl, $pageObj->alias);	
+		    
+		break;			    
+		case 'tl_news':
+
+		    if($GLOBALS['TL_CONFIG']['rms_prevjump_news'])
+		    {
+			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
+										->limit(1)
+										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_news']);
+    
+			if ($objJumpTo->numRows)
+			{
+			    $strUrl = $this->generateFrontendUrl($objJumpTo->fetchAssoc(), ($GLOBALS['TL_CONFIG']['useAutoItem'] ?  '/%s' : '/do/preview/items/%s'));			
+			}                  
+		    }
+		    
+		    //get Link-Title
+		    $pageObj = $this->Database->prepare('SELECT * FROM `tl_news` WHERE `id`=?')
+					      ->limit(1)
+					      ->execute($this->Input->get('id'));
+					      
+		    $strPreviewUrl = sprintf($strUrl, $pageObj->alias);					      		    		
+		    break;		    		    		    		    		    		    
+		}
+				
+		return $strPreviewUrl;		
+		
+	 }
 	
 }

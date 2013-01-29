@@ -28,7 +28,6 @@
  * @filesource
  */
 
-// load for Contao 3.x Version
 require_once(TL_ROOT.'/system/config/localconfig.php');
  
 if($GLOBALS['TL_CONFIG']['rms_active']) 
@@ -45,7 +44,12 @@ if($GLOBALS['TL_CONFIG']['rms_active'])
     
     $GLOBALS['BE_MOD']['content']['article']['showPreview'] = array('ReleaseManagementSystem', 'showPreviewInBrowser');
     $GLOBALS['BE_MOD']['content']['article']['stylesheet'] = 'system/modules/rms/html/be.css';
-    
+    $GLOBALS['BE_MOD']['content']['news']['showPreview'] = array('ReleaseManagementSystem', 'showPreviewInBrowser');
+    $GLOBALS['BE_MOD']['content']['news']['stylesheet'] = 'system/modules/rms/html/be.css';    
+    $GLOBALS['BE_MOD']['content']['calendar']['showPreview'] = array('ReleaseManagementSystem', 'showPreviewInBrowser');
+    $GLOBALS['BE_MOD']['content']['calendar']['stylesheet'] = 'system/modules/rms/html/be.css';  
+    $GLOBALS['BE_MOD']['content']['newsletter']['showPreview'] = array('ReleaseManagementSystem', 'showPreviewInBrowser');
+    $GLOBALS['BE_MOD']['content']['newsletter']['stylesheet'] = 'system/modules/rms/html/be.css';         
     
     $GLOBALS['TL_HOOKS']['loadDataContainer'][] = array('ReleaseManagementSystem', 'handleBackendUserAccessControlls');
     $GLOBALS['TL_HOOKS']['getContentElement'][] = array('ReleaseManagementSystem', 'previewContentElement');
