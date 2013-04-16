@@ -35,7 +35,7 @@ if($GLOBALS['TL_CONFIG']['rms_active'])
     array_insert($GLOBALS['BE_MOD']['content'], 1, array
     (
     'rms' => array (
-	    'tables' => array('tl_rms'),
+	    'tables' => array('tl_rms','tl_rms_settings'),
 	    'icon'  => 'system/modules/rms/html/promotion.png',
 	    'stylesheet' => 'system/modules/rms/html/be.css',
 	    'acknowledge' => array('ReleaseManagementSystem','acknowdlgeEntry'),	    
@@ -58,3 +58,11 @@ if($GLOBALS['TL_CONFIG']['rms_active'])
 $GLOBALS['FE_MOD']['news']['newsreader_rms'] = 'ModuleNewsReaderRMS';
 $GLOBALS['FE_MOD']['newsletter']['nl_reader_rms'] = 'ModuleNewsletterReaderRMS';
 $GLOBALS['FE_MOD']['events']['eventreader_rms'] = 'ModuleEventReaderRMS';
+
+/**
+* source tables that have rms enabled
+*/
+$GLOBALS['rms_extension']['tables'][] = 'tl_content';
+$GLOBALS['rms_extension']['tables'][] = 'tl_newsletter';
+$GLOBALS['rms_extension']['tables'][] = 'tl_calendar_events';
+$GLOBALS['rms_extension']['tables'][] = 'tl_news';

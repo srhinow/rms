@@ -43,13 +43,15 @@ $GLOBALS['TL_LANG']['tl_rms']['ref_author']     = array('Author der Änderung', 
 $GLOBALS['TL_LANG']['tl_rms']['ref_id']     = array('ID', 'Eindeutige Datenbank-ID des geänderten Datensatzes');
 $GLOBALS['TL_LANG']['tl_rms']['ref_notice']     = array('Freigabe-Anmerkung', 'Die Anmerkung dient dem Verantwortlichen als Hilfestellung der Änderungen.');
 $GLOBALS['TL_LANG']['tl_rms']['data']     = array('geänderte Daten', 'serialisierte Daten des Datensatzes');
-
+$GLOBALS['TL_LANG']['tl_rms']['status']     = array('Status', 'zeigt an ob diese Freigabe bereits beantwortet wurde.');
+$GLOBALS['TL_LANG']['tl_rms']['status_options'] = array('0'=>'unbearbeitet','1'=>'bearbeitet');
 /**
  * Buttons
  */
+$GLOBALS['TL_LANG']['tl_rms']['settings']     = array('Freigabe-Einstellungen', '');
 $GLOBALS['TL_LANG']['tl_rms']['acknowledge']     = array('Änderung freigeben', 'diese Änderung freigeben.');
 $GLOBALS['TL_LANG']['tl_rms']['delete']     = array('Änderung löschen', 'diese Änderung löschen.');
-$GLOBALS['TL_LANG']['tl_article']['edit']       = array('Inhalt bearbeiten', 'Inhalt bearbeiten');
+$GLOBALS['TL_LANG']['tl_rms']['edit']       = array('Inhalt bearbeiten', 'Inhalt bearbeiten');
 
 /**
  * Legends

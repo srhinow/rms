@@ -33,12 +33,10 @@
  * Fields
  */
  $GLOBALS['TL_LANG']['tl_settings']['rms_active']     = array('Freigabe-Modus aktivieren', 'Erst wenn der Haken gesetzt ist, ist die Freigabe-Verwaltung aktiv.');
-$GLOBALS['TL_LANG']['tl_settings']['rms_control_group'] = array('Gruppe mit Freigabeberechtigung', 'Geben Sie die Benutzergruppe an welche eine Freigabeberechtigung haben soll.');
-$GLOBALS['TL_LANG']['tl_settings']['rms_sender']         = array('Empfangs-E-Mail', 'Hier können Sie ein oder mehrere EmailAdressen kommo-separiert eingeben.');
-
+ 
 /**
  * Legends
  */
-$GLOBALS['TL_LANG']['tl_settings']['rms_legend']      = 'Freigabe-Einstellungen';
+$GLOBALS['TL_LANG']['tl_settings']['rms_legend']      = 'Freigabe-Modul';
 
 ?>

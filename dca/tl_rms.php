@@ -58,6 +58,13 @@ $GLOBALS['TL_DCA']['tl_rms'] = array
 		),
 		'global_operations' => array
 		(
+			'settings' => array
+			(
+				'label'               => &$GLOBALS['TL_LANG']['tl_rms']['settings'],
+				'href'                => 'table=tl_rms_settings&act=edit&id=1',
+				'class'               => 'navigation settings',
+				'attributes'          => 'onclick="Backend.getScrollOffset();"'
+			),			
 			'all' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['MSC']['all'],
@@ -113,7 +120,7 @@ $GLOBALS['TL_DCA']['tl_rms'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_rms']['ref_author'],
 			'filter'                  => true,
-			'foreignKey'				=> 'tl_user.username',
+			'foreignKey'		  => 'tl_user.username',
 			'sorting'                 => true
 		),
 		'ref_id' => array
@@ -127,7 +134,14 @@ $GLOBALS['TL_DCA']['tl_rms'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_rms']['ref_notice'],
 			'search'                  => true
-		),		
+		),
+		'status' => array
+		(
+			'label'                   => &$GLOBALS['TL_LANG']['tl_rms']['status'],
+			'filter'                  => true,
+			'sorting'                 => true,
+			'reference'               => &$GLOBALS['TL_LANG']['tl_rms']['status_options']
+		),				
 		'data' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_rms']['data'],
@@ -157,6 +171,13 @@ class tl_rms extends Backend
 	{
 		$this->import('Database');
 		
+		//get settings
+		$resObj = $this->Database->prepare('SELECT * FROM `tl_rms_settings`')
+				       ->limit(1)
+				       ->execute();
+		$settings = (!$resObj->numRows) ? array() : $resObj->row();
+	    		
+		//get user
 		$userObj = $this->Database->prepare('SELECT * FROM `tl_user` WHERE `id`=?')
 		               ->limit(1)
 			       ->execute($row['ref_author']);
@@ -181,11 +202,11 @@ class tl_rms extends Backend
 		    
 		    $bereich = 'Newsletter';		    
 		    //get Preview-Link
-		    if($GLOBALS['TL_CONFIG']['rms_prevjump_newsletter'])
+		    if($settings['prevjump_newsletter'])
 		    {
 			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
 										->limit(1)
-										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_newsletter']);
+										->execute($settings['prevjump_newsletter']);
     
 			if ($objJumpTo->numRows)
 			{
@@ -204,11 +225,11 @@ class tl_rms extends Backend
 		case 'tl_calendar_events':
 		    
 		    $bereich = 'Veranstaltung';
-		    if($GLOBALS['TL_CONFIG']['rms_prevjump_calendar_events'])
+		    if($settings['prevjump_calendar_events'])
 		    {
 			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
 										->limit(1)
-										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_calendar_events']);
+										->execute($settings['prevjump_calendar_events']);
     
 			if ($objJumpTo->numRows)
 			{
@@ -227,11 +248,11 @@ class tl_rms extends Backend
 		case 'tl_news':
 		
 		    $bereich = 'Nachrichten';
-		    if($GLOBALS['TL_CONFIG']['rms_prevjump_news'])
+		    if($settings['prevjump_news'])
 		    {
 			$objJumpTo = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?" . (!BE_USER_LOGGED_IN ? " AND (start='' OR start<$time) AND (stop='' OR stop>$time) AND published=1" : ""))
 										->limit(1)
-										->execute($GLOBALS['TL_CONFIG']['rms_prevjump_news']);
+										->execute($settings['prevjump_news']);
     
 			if ($objJumpTo->numRows)
 			{
@@ -246,9 +267,9 @@ class tl_rms extends Backend
 		    $strPreviewLink = '<a href="'.sprintf($strUrl, $pageObj->alias).'" target="_blank">'.$pageObj->headline.'</a>';					      		    		
 		    break;		    		    
 		}
-			  
-				
-		$label = '<strong>Bereich:</strong> '.$bereich.'<br>';
+			  			  
+		$label  = '<strong>Status:</strong><span class="status_'.$row['status'].'"> '.$GLOBALS['TL_LANG']['tl_rms']['status_options'][$row['status']].'</span><br>';		
+		$label .= '<strong>Bereich:</strong> '.$bereich.'<br>';
 		$label .= '<strong>Vorchau-Link: </strong>'.$strPreviewLink.'<br>';
 		$label .= '<strong>Author:</strong> '.$userObj->name.' ('.$userObj->email.')<br>
 		<strong>Änderungs-Notiz:</strong> '.nl2br($row['ref_notice']);

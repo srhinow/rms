@@ -32,7 +32,7 @@
  * System configuration
  */
  
-$GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';{rms_legend:hide},rms_active,rms_control_group,rms_sender,rms_senderName,rms_prevjump_newsletter,rms_prevjump_news,rms_prevjump_calendar_events';
+$GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';{rms_legend:hide},rms_active';
  
 $GLOBALS['TL_DCA']['tl_settings']['fields']['rms_active'] = array
 		(
@@ -41,72 +41,5 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['rms_active'] = array
 			'inputType'               => 'checkbox'
 		);
 		
-$GLOBALS['TL_DCA']['tl_settings']['fields']['rms_control_group'] = array
-		(
-		'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['rms_control_group'],
-		'exclude'                 => true,
-		'inputType'               => 'radio',
-		'foreignKey'              => 'tl_user_group.name',
-		'eval'                    => array('multiple'=>false)
-		);
-
-$GLOBALS['TL_DCA']['tl_settings']['fields']['rms_sender'] = array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['rms_sender'],
-			'exclude'                 => true,
-			'inputType'               => 'text',
-			'eval'                    => array('decodeEntities'=>true, 'tl_class'=>'clr')
-		);
-				
-$GLOBALS['TL_DCA']['tl_settings']['fields']['rms_prevjump_newsletter'] = array
-		(
-		    'label'                   => &$GLOBALS['TL_LANG']['tl_module']['rms_prevjump_newsletter'],
-		    'exclude'                 => true,
-		    'inputType'               => 'pageTree',
-		    'eval'                    => array('fieldType'=>'radio')
-		);
-				
-$GLOBALS['TL_DCA']['tl_settings']['fields']['rms_prevjump_news'] = array
-		(
-		    'label'                   => &$GLOBALS['TL_LANG']['tl_module']['rms_prevjump_news'],
-		    'exclude'                 => true,
-		    'inputType'               => 'pageTree',
-		    'eval'                    => array('fieldType'=>'radio')
-		);
-			
-$GLOBALS['TL_DCA']['tl_settings']['fields']['rms_prevjump_calendar_events'] = array
-		(
-		    'label'                   => &$GLOBALS['TL_LANG']['tl_module']['rms_prevjump_calendar_events'],
-		    'exclude'                 => true,
-		    'inputType'               => 'pageTree',
-		    'eval'                    => array('fieldType'=>'radio')
-		);
-		
-/**
- * Class tl_content
- *
- * Provide miscellaneous methods that are used by the data configuration array.
- * @copyright  Leo Feyer 2005-2012
- * @author     Leo Feyer <http://www.contao.org>
- * @package    Controller
- */
-class tl_rms_settings extends Backend
-{						
-	/**
-	 * Get all modules and return them as array
-	 * @return array
-	 */
-	public function getModules()
-	{
-		$arrModules = array();
-		$objModules = $this->Database->execute("SELECT m.id, m.name, t.name AS theme FROM tl_module m LEFT JOIN tl_theme t ON m.pid=t.id ORDER BY t.name, m.name");
-
-		while ($objModules->next())
-		{
-			$arrModules[$objModules->theme][$objModules->id] = $objModules->name . ' (ID ' . $objModules->id . ')';
-		}
-
-		return $arrModules;
-	}						
-}						
+								
 ?>

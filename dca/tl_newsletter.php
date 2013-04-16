@@ -30,10 +30,26 @@
 
 
 /**
- * Table tl_calendar
+ * Table tl_newsletter
  */
+require_once(TL_ROOT.'/system/config/localconfig.php');
  
-$GLOBALS['TL_DCA']['tl_newsletter']['fields']['rms_notice'] = array
+if($GLOBALS['TL_CONFIG']['rms_active']) 
+{
+    $GLOBALS['TL_DCA']['tl_newsletter']['config']['onload_callback'][] = array('ReleaseManagementSystem','addRMFields'); 
+    $GLOBALS['TL_DCA']['tl_newsletter']['list']['operations']['send']['button_callback'] = array('tl_rms_newsletter','checkSendIcon');
+    $GLOBALS['TL_DCA']['tl_newsletter']['list']['operations']['showPreview'] = array                 
+			(
+				'label'               => &$GLOBALS['TL_LANG']['tl_calendar_events']['show_preview'],
+				'href'                => 'key=showPreview',
+				'class'               => 'browser_preview',
+				'icon'                => 'page.gif',
+				'attributes'          => 'target="_blank"',
+				'button_callback' => array('tl_rms_newsletter','checkPreviewIcon')
+			);
+
+ 
+    $GLOBALS['TL_DCA']['tl_newsletter']['fields']['rms_notice'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_newsletter']['rms_notice'],
 			'exclude'                 => true,
@@ -41,7 +57,7 @@ $GLOBALS['TL_DCA']['tl_newsletter']['fields']['rms_notice'] = array
 			'inputType'               => 'textarea',
 			'eval'                    => array('mandatory'=>false, 'rte'=>FALSE)
 		);
-$GLOBALS['TL_DCA']['tl_newsletter']['fields']['rms_release_info'] = array
+    $GLOBALS['TL_DCA']['tl_newsletter']['fields']['rms_release_info'] = array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_newsletter']['rms_release_info'],
 			'exclude'                 => true,
@@ -51,3 +67,71 @@ $GLOBALS['TL_DCA']['tl_newsletter']['fields']['rms_release_info'] = array
 				array('ReleaseManagementSystem', 'sendEmailInfo')
 			)
 		);
+};
+
+/**
+ * Class tl_rms_newsletter
+ *
+ * Provide miscellaneous methods that are used by the data configuration array.
+ * @copyright  Leo Feyer 2005-2013
+ * @author     Leo Feyer <https://contao.org>
+ * @package    Controller
+ */
+class tl_rms_newsletter extends Backend
+{
+    
+    /**
+     * Import the back end user object
+     */
+    public function __construct()
+    {
+	parent::__construct();
+	$this->import('BackendUser', 'User');
+    }
+    
+    /**
+     * Return the "toggle send-button"
+     * @param array
+     * @param string
+     * @param string
+     * @param string
+     * @param string
+     * @param string
+     * @return string
+     */
+    public function checkSendIcon($row, $href, $label, $title, $icon, $attributes)
+    {
+        $this->import('Database');
+
+        //test rms
+        $rmsObj = $this->Database->prepare('SELECT * FROM `tl_rms` WHERE `ref_table`=? AND `ref_id`=?')
+				 ->execute('tl_newsletter',$row['id']);
+        if($rmsObj->numRows > 0) return '';
+        else return '<a href="'.$this->addToUrl('id='.$row['id'].'&'.$href).'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
+        
+    }  
+    /**
+     * Return the "toggle preview-button" 
+     * @param array
+     * @param string
+     * @param string
+     * @param string
+     * @param string
+     * @param string
+     * @return string
+     */
+    public function checkPreviewIcon($row, $href, $label, $title, $icon, $attributes)
+    {
+        $this->import('Database');
+        $this->import('ReleaseManagementSystem');
+        $previewLink = $this->ReleaseManagementSystem->getPreviewLink($row['id'],'tl_newsletter'); 
+                
+        //test rms
+        $rmsObj = $this->Database->prepare('SELECT * FROM `tl_rms` WHERE `ref_table`=? AND `ref_id`=?')
+				 ->execute('tl_newsletter',$row['id']);
+        if($rmsObj->numRows > 0) return '<a href="'.$previewLink.'" title="'.specialchars($title).'"'.$attributes.'>'.$this->generateImage($icon, $label).'</a> ';
+        else return '';
+        
+    }       
+
+}
