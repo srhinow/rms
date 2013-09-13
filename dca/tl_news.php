@@ -141,7 +141,6 @@ class tl_rms_news extends Backend
 	    // Check permissions to edit
 	    $this->Input->setGet('id', $intId);
 	    $this->Input->setGet('act', 'toggle');
-	    $this->checkPermission();
 
 	    // Check permissions to publish
 	    if (!$this->User->isAdmin && !$this->User->hasAccess('tl_news::published', 'alexf'))

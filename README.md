@@ -1,9 +1,9 @@
 rms
 ===
 
-rms-Einstellungen in "Freigabe-Anfragen"->"Freigabe-Einstellungen" …
+2013.04.16
 
-…umgelagert. Nur aktivierung des rms-Moduls bleibt unter den Contao-Einstellungen
+rms-Einstellungen in "Freigabe-Anfragen"->"Freigabe-Einstellungen" umgelagert. Nur aktivierung des rms-Moduls bleibt unter den Contao-Einstellungen
 
 - nur berücksichtigung für eingestellte Seitenbäume
   - rms - Redaktionsgruppe
@@ -16,3 +16,5 @@ rms-Einstellungen in "Freigabe-Anfragen"->"Freigabe-Einstellungen" …
 - Buttons (sichtbar bzw bei Newsletter der senden-Button) werden durch das Vorschau-Icon ersetzt solange dieses Element nicht freigegeben wurde.
 - diverse Bugs wurden beseitigt
 - fehlende Übersetzungen (deutsch) wurden ersetzt
+
+

@@ -62,7 +62,7 @@ $GLOBALS['FE_MOD']['events']['eventreader_rms'] = 'ModuleEventReaderRMS';
 /**
 * source tables that have rms enabled
 */
-$GLOBALS['rms_extension']['tables'][] = 'tl_content';
+// $GLOBALS['rms_extension']['tables'][] = 'tl_content';
 $GLOBALS['rms_extension']['tables'][] = 'tl_newsletter';
 $GLOBALS['rms_extension']['tables'][] = 'tl_calendar_events';
 $GLOBALS['rms_extension']['tables'][] = 'tl_news';

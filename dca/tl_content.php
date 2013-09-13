@@ -111,7 +111,7 @@ class tl_rms_content extends Backend
 	else 
 	{
 		if (strlen($this->Input->get('tid')))
-		{
+		{ 
 			$this->toggleVisibility($this->Input->get('tid'), ($this->Input->get('state') == 1));
 			$this->redirect($this->getReferer());
 		}
@@ -144,7 +144,7 @@ class tl_rms_content extends Backend
 		// Check permissions to edit
 		$this->Input->setGet('id', $intId);
 		$this->Input->setGet('act', 'toggle');
-		$this->checkPermission();
+
 
 		// Check permissions to publish
 		if (!$this->User->isAdmin && !$this->User->hasAccess('tl_content::invisible', 'alexf'))

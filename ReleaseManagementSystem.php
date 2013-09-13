@@ -276,8 +276,6 @@ class ReleaseManagementSystem extends Backend
 		// dont new if super_redacteure
 		$userID =  ($this->Input->get("author")) ? $this->Input->get("author") :  $this->BackendUser->id;		
 		$data = $dc->getDataArray();
-                                
-                          
 				
 		// create / first-save
 		$isNewEntryObj = $this->Database->prepare('SELECT count(*) c FROM `'.$this->Input->get("table").'` WHERE `id`=? AND `tstamp`=?')
@@ -289,7 +287,7 @@ class ReleaseManagementSystem extends Backend
 		    //correct enny fields
 		    switch($this->Input->get('table')) 
 		    {
-			case 'tl_calendar_events': 
+			case 'tl_calendar_events':  			
 			    $data = $this->adjustTimeCalEvents($data);
 			    $data['alias'] = $this->generateAlias('',$data['title']); 
 			    $data['published'] = 0;
@@ -313,7 +311,16 @@ class ReleaseManagementSystem extends Backend
 		     		     		     
 		     $objUpdate = $this->Database->prepare("UPDATE ".$this->Input->get("table")." %s WHERE id=?")->set($data)->execute($this->Input->get("id"));		     		
 		}
-				
+
+		//calemder_events start/end-Felder korrigieren
+		if($this->Input->get('table') == 'tl_calendar_events')
+		{										
+		    $data['startDate'] = strtotime($this->Input->post('startDate'));
+		    $data['endDate'] = strtotime($this->Input->post('endDate'));
+		    $data['startTime'] = strtotime($this->Input->post('startDate') . ' ' . $this->Input->post('startTime').':00');		
+		    $data['endTime'] = strtotime($this->Input->post('endDate') . ' ' . $this->Input->post('endTime').':00');    
+		}
+		 	    
 		//status
 		$status = ($this->BackendUser->isMemberOf($this->settings['control_group'])) ?  1 : 0; 
 		                             
@@ -398,7 +405,7 @@ class ReleaseManagementSystem extends Backend
 	   {
 	      return; 
 	   }
-	   
+
 	    $arrSet['startTime'] = $data['startDate'];
 	    $arrSet['endTime'] = $data['startDate'];
 
@@ -419,7 +426,7 @@ class ReleaseManagementSystem extends Backend
 	    // Add time
 	    if ($data['addTime'])
 	    {
-		    $arrSet['startTime'] = strtotime(date('Y-m-d', $arrSet['startTime']) . ' ' . date('H:i:s', $data['startTime']));
+		    $arrSet['startTime'] = strtotime(date('Y-m-d', $arrSet['startDate']) . ' ' . date('H:i:s', $data['startDate']));
 		    $arrSet['endTime'] = strtotime(date('Y-m-d', $arrSet['endTime']) . ' ' . date('H:i:s', $data['endTime']));	    
 	    }
 
@@ -496,7 +503,7 @@ class ReleaseManagementSystem extends Backend
 			    break; 	
 			case 'tl_content': 
 			    unset($arrData['published']);
-			    $arrData['invisible'] = 0;
+			    $arrData['invisible'] = '';
 			    break; 
 			case 'tl_newsletter':
 			     unset($arrData['published']);												   

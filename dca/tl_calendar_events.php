@@ -144,7 +144,6 @@ class tl_rms_calendar_events extends Backend
 	    // Check permissions to edit
 	    $this->Input->setGet('id', $intId);
 	    $this->Input->setGet('act', 'toggle');
-	    $this->checkPermission();
 
 	    // Check permissions to publish
 	    if (!$this->User->isAdmin && !$this->User->hasAccess('tl_calendar_events::published', 'alexf'))
